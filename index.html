@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#123f93">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Invoice Pro">
+<link rel="stylesheet" href="styles.css?v=20260909-financeplus">
+<title>Invoice Pro</title>
+</head>
+<body>
+<header class="app-header">
+  <div>
+    <div class="brand">Invoice Pro</div>
+    <div class="build">Build 2026.09.09-AUTODAILYBACKUP</div>
+  </div>
+  <div class="lang-switch">
+    <button id="enBtn" onclick="setLang('en')">EN</button>
+    <button id="arBtn" onclick="setLang('ar')">AR</button>
+  </div>
+</header>
+
+<main>
+<section id="home" class="screen active">
+  <div class="hero">
+    <h1 data-en="Simple invoicing" data-ar="فواتير بسيطة">Simple invoicing</h1>
+    <p data-en="Create invoices and quotations with optional VAT." data-ar="أنشئ الفواتير وعروض الأسعار مع ضريبة اختيارية.">Create invoices and quotations with optional VAT.</p>
+    <div class="hero-actions">
+      <button class="gold" onclick="startInvoice()" data-en="+ Create Invoice" data-ar="+ إنشاء فاتورة">+ Create Invoice</button>
+      <button class="ghost" onclick="startQuote()" data-en="+ Quotation" data-ar="+ عرض سعر">+ Quotation</button>
+    </div>
+  </div>
+
+  <div id="dailyBackupNotice" class="card daily-backup-notice hidden">
+    <div class="daily-backup-notice-text">
+      <strong data-en="Daily backup ready" data-ar="النسخة اليومية جاهزة">Daily backup ready</strong>
+      <small id="dailyBackupNoticeText"></small>
+    </div>
+    <button class="gold" onclick="shareLatestDailyBackup()" data-en="Save to Cloud" data-ar="حفظ في السحابة">Save to Cloud</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span data-en="Total Sales" data-ar="إجمالي المبيعات">Total Sales</span><strong id="salesStat">0.000 OMR</strong></div>
+    <div class="stat"><span data-en="Outstanding" data-ar="المستحق">Outstanding</span><strong id="dueStat">0.000 OMR</strong></div>
+    <div class="stat"><span data-en="Expenses" data-ar="المصروفات">Expenses</span><strong id="expenseStat">0.000 OMR</strong></div>
+    <div class="stat"><span data-en="Simple Net" data-ar="الصافي">Simple Net</span><strong id="netStat">0.000 OMR</strong></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <h3 data-en="Recent Invoices" data-ar="آخر الفواتير">Recent Invoices</h3>
+      <button class="link" onclick="show('invoiceList')" data-en="View All" data-ar="عرض الكل">View All</button>
+    </div>
+    <div id="recentList" class="empty" data-en="No invoices yet" data-ar="لا توجد فواتير بعد">No invoices yet</div>
+  </div>
+</section>
+
+<section id="invoiceForm" class="screen">
+  <div class="topline">
+    <button class="back" onclick="show('home')">‹</button>
+    <div>
+      <h2 data-en="New Invoice" data-ar="فاتورة جديدة">New Invoice</h2>
+      <small id="invoiceNo"></small>
+    </div>
+  </div>
+
+  <div class="card invoice-date-card">
+    <label data-en="Invoice Date" data-ar="تاريخ الفاتورة">Invoice Date</label>
+    <input id="invoiceDate" type="date">
+
+    <label data-en="Document Status" data-ar="حالة المستند">Document Status</label>
+    <select id="invoiceStatus">
+      <option value="draft" data-en="Draft" data-ar="مسودة">Draft</option>
+      <option value="sent" data-en="Sent" data-ar="مرسلة">Sent</option>
+      <option value="approved" data-en="Approved" data-ar="معتمدة">Approved</option>
+      <option value="cancelled" data-en="Cancelled" data-ar="ملغاة">Cancelled</option>
+    </select>
+    <small class="form-help" data-en="Paid and Partially Paid are calculated automatically." data-ar="يتم احتساب مدفوعة ومدفوعة جزئياً تلقائياً.">Paid and Partially Paid are calculated automatically.</small>
+  </div>
+
+  <div class="card">
+    <label data-en="Customer" data-ar="العميل">Customer</label>
+    <div class="select-action-row">
+      <select id="customerSelect" onchange="selectCustomer()"></select>
+      <button type="button" class="mini-add" onclick="quickAddCustomer()" data-en="+ Customer" data-ar="+ عميل">+ Customer</button>
+    </div>
+    <input id="customerName" data-ph-en="Customer name" data-ph-ar="اسم العميل" placeholder="Customer name">
+    <input id="customerPhone" data-ph-en="Phone (optional)" data-ph-ar="الهاتف (اختياري)" placeholder="Phone (optional)">
+    <input id="customerAddress" data-ph-en="Address (optional)" data-ph-ar="العنوان (اختياري)" placeholder="Address (optional)">
+  </div>
+
+  <div class="card">
+    <label data-en="Items" data-ar="البنود">Items</label>
+    <div class="select-action-row">
+      <select id="productSelect" onchange="selectProduct()"></select>
+      <button type="button" class="mini-add" onclick="quickAddProduct()" data-en="+ Product" data-ar="+ منتج">+ Product</button>
+    </div>
+    <input id="itemName" data-ph-en="Item / service" data-ph-ar="البند / الخدمة" placeholder="Item / service">
+    <div class="two">
+      <input id="qty" type="number" step="0.01" value="1" data-ph-en="Qty" data-ph-ar="الكمية" placeholder="Qty">
+      <input id="price" type="number" step="0.001" data-ph-en="Price" data-ph-ar="السعر" placeholder="Price">
+    </div>
+    <button class="soft" onclick="addItem()" data-en="Add Item" data-ar="إضافة بند">Add Item</button>
+    <div id="itemList"></div>
+  </div>
+
+  <div class="card">
+    <label data-en="Discount" data-ar="الخصم">Discount</label>
+    <div class="two">
+      <select id="discountType" onchange="updateTotals()">
+        <option value="percent" data-en="Percentage %" data-ar="نسبة %">Percentage %</option>
+        <option value="amount" data-en="Fixed Amount" data-ar="مبلغ ثابت">Fixed Amount</option>
+      </select>
+      <input id="discountValue" type="number" min="0" step="0.001" value="0" oninput="updateTotals()" data-ph-en="Discount value" data-ph-ar="قيمة الخصم" placeholder="Discount value">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toggle-row">
+      <div>
+        <strong data-en="VAT" data-ar="القيمة المضافة">VAT</strong>
+        <small data-en="Optional" data-ar="اختيارية">Optional</small>
+      </div>
+      <input id="vatToggle" type="checkbox" onchange="updateTotals()">
+    </div>
+    <div id="vatRateBox" class="hidden">
+      <input id="vatRate" type="number" step="0.01" value="5" oninput="updateTotals()">
+    </div>
+  </div>
+
+  <div class="card totals">
+    <div><span data-en="Subtotal" data-ar="المجموع الفرعي">Subtotal</span><strong id="subT">0.000 OMR</strong></div>
+    <div id="discountLine" class="hidden"><span data-en="Discount" data-ar="الخصم">Discount</span><strong id="discountT">0.000 OMR</strong></div>
+    <div id="vatLine" class="hidden"><span data-en="VAT" data-ar="القيمة المضافة">VAT</span><strong id="vatT">0.000 OMR</strong></div>
+    <div class="grand"><span data-en="Grand Total" data-ar="الإجمالي">Grand Total</span><strong id="grandT">0.000 OMR</strong></div>
+  </div>
+
+  <div class="card">
+    <label data-en="Paid Amount" data-ar="المبلغ المدفوع">Paid Amount</label>
+    <input id="paid" type="number" step="0.001" value="0" oninput="updateTotals()">
+  </div>
+
+  <div class="card">
+    <label data-en="Notes" data-ar="ملاحظات">Notes</label>
+    <textarea id="notes" rows="4" data-ph-en="Write invoice notes here..." data-ph-ar="اكتب ملاحظات الفاتورة هنا..." placeholder="Write invoice notes here..."></textarea>
+    <label data-en="Terms & Conditions" data-ar="الشروط والأحكام">Terms & Conditions</label>
+    <textarea id="terms" rows="3" data-ph-en="Write terms and conditions here..." data-ph-ar="اكتب الشروط والأحكام هنا..." placeholder="Write terms and conditions here..."></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="soft" onclick="previewCurrentInvoice()" data-en="Preview" data-ar="معاينة">Preview</button>
+    <button class="gold" onclick="saveInvoice()" data-en="Save Invoice" data-ar="حفظ الفاتورة">Save Invoice</button>
+  </div>
+</section>
+
+<section id="quoteForm" class="screen">
+  <div class="topline">
+    <button class="back" onclick="show('home')">‹</button>
+    <div><h2 data-en="New Quotation" data-ar="عرض سعر جديد">New Quotation</h2><small id="quoteNo"></small></div>
+  </div>
+  <div class="card">
+    <label data-en="Customer" data-ar="العميل">Customer</label>
+    <div class="select-action-row">
+      <select id="qCustomerSelect" onchange="selectQuoteCustomer()"></select>
+      <button type="button" class="mini-add" onclick="quickAddQuoteCustomer()" data-en="+ Customer" data-ar="+ عميل">+ Customer</button>
+    </div>
+    <input id="qCustomer" data-ph-en="Customer name" data-ph-ar="اسم العميل" placeholder="Customer name">
+    <input id="qCustomerPhone" data-ph-en="Phone (optional)" data-ph-ar="الهاتف (اختياري)" placeholder="Phone (optional)">
+    <input id="qCustomerAddress" data-ph-en="Address (optional)" data-ph-ar="العنوان (اختياري)" placeholder="Address (optional)">
+    <input id="qValidity" type="number" value="30" data-ph-en="Validity days" data-ph-ar="مدة الصلاحية بالأيام" placeholder="Validity days">
+    <label data-en="Quotation Status" data-ar="حالة عرض السعر">Quotation Status</label>
+    <select id="qStatus">
+      <option value="draft" data-en="Draft" data-ar="مسودة">Draft</option>
+      <option value="sent" data-en="Sent" data-ar="مرسل">Sent</option>
+      <option value="approved" data-en="Approved" data-ar="مقبول">Approved</option>
+      <option value="rejected" data-en="Rejected" data-ar="مرفوض">Rejected</option>
+      <option value="cancelled" data-en="Cancelled" data-ar="ملغى">Cancelled</option>
+    </select>
+  </div>
+  <div class="card">
+    <div class="select-action-row">
+      <select id="qProductSelect" onchange="selectQuoteProduct()"></select>
+      <button type="button" class="mini-add" onclick="quickAddQuoteProduct()" data-en="+ Product" data-ar="+ منتج">+ Product</button>
+    </div>
+    <input id="qItem" data-ph-en="Item / service" data-ph-ar="البند / الخدمة" placeholder="Item / service">
+    <div class="two">
+      <input id="qQty" type="number" value="1" step="0.01">
+      <input id="qPrice" type="number" step="0.001" data-ph-en="Price" data-ph-ar="السعر" placeholder="Price">
+    </div>
+    <button class="soft" onclick="addQItem()" data-en="Add Item" data-ar="إضافة بند">Add Item</button>
+    <div id="qItems"></div>
+  </div>
+  <div class="card">
+    <label data-en="Discount" data-ar="الخصم">Discount</label>
+    <div class="two">
+      <select id="qDiscountType">
+        <option value="percent" data-en="Percentage %" data-ar="نسبة %">Percentage %</option>
+        <option value="amount" data-en="Fixed Amount" data-ar="مبلغ ثابت">Fixed Amount</option>
+      </select>
+      <input id="qDiscountValue" type="number" min="0" step="0.001" value="0" data-ph-en="Discount value" data-ph-ar="قيمة الخصم" placeholder="Discount value">
+    </div>
+  </div>
+  <div class="card bottom-notes-card">
+    <label data-en="Notes" data-ar="ملاحظات">Notes</label>
+    <textarea id="qNotes" rows="4" data-ph-en="Write quotation notes here..." data-ph-ar="اكتب ملاحظات عرض السعر هنا..." placeholder="Write quotation notes here..."></textarea>
+    <label data-en="Terms & Conditions" data-ar="الشروط والأحكام">Terms & Conditions</label>
+    <textarea id="qTerms" rows="3" data-ph-en="Write terms and conditions here..." data-ph-ar="اكتب الشروط والأحكام هنا..." placeholder="Write terms and conditions here..."></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="soft" onclick="previewCurrentQuote()" data-en="Preview" data-ar="معاينة">Preview</button>
+    <button class="gold" onclick="saveQuote()" data-en="Save Quotation" data-ar="حفظ عرض السعر">Save Quotation</button>
+  </div>
+</section>
+
+<section id="preview" class="screen">
+  <div class="topline no-print">
+    <button class="back" onclick="show(previewBack)">‹</button>
+    <div><h2 data-en="Preview" data-ar="معاينة">Preview</h2><small id="previewDocNo"></small></div>
+  </div>
+  <div class="preview-toolbar no-print">
+      <button class="gold" onclick="shareActualPDF()" data-en="Share PDF" data-ar="مشاركة PDF">Share PDF</button>
+      <button class="soft" onclick="openActualPDF()" data-en="Open / Print PDF" data-ar="فتح / طباعة PDF">Open / Print PDF</button>
+    </div>
+    <div id="paper" class="paper"></div>
+</section>
+
+<section id="documents" class="screen">
+  <div class="topline">
+    <button class="back" onclick="show('home')">‹</button>
+    <div>
+      <h2 data-en="Invoices & Quotations" data-ar="الفواتير وعروض الأسعار">Invoices & Quotations</h2>
+      <small data-en="All documents in one place" data-ar="كل المستندات في مكان واحد">All documents in one place</small>
+    </div>
+  </div>
+
+  <div class="document-actions">
+    <button class="gold" onclick="startInvoice()" data-en="+ New Invoice" data-ar="+ فاتورة جديدة">+ New Invoice</button>
+    <button class="soft" onclick="startQuote()" data-en="+ New Quotation" data-ar="+ عرض سعر جديد">+ New Quotation</button>
+  </div>
+
+  <div class="doc-segment">
+    <button id="docInvoicesBtn" class="active" onclick="setDocumentTab('invoices')" data-en="Invoices" data-ar="الفواتير">Invoices</button>
+    <button id="docQuotesBtn" onclick="setDocumentTab('quotes')" data-en="Quotations" data-ar="عروض الأسعار">Quotations</button>
+  </div>
+
+  <div id="documentsList" class="card"></div>
+</section>
+
+<section id="invoiceList" class="screen">
+  <div class="topline">
+    <button class="back" onclick="show('home')">‹</button><h2 data-en="Invoices" data-ar="الفواتير">Invoices</h2>
+  </div>
+  <div id="invoiceRows" class="card"></div>
+</section>
+
+<section id="quoteList" class="screen">
+  <div class="topline"><button class="back" onclick="show('home')">‹</button><h2 data-en="Quotations" data-ar="عروض الأسعار">Quotations</h2></div>
+  <div id="quoteRows" class="card"></div>
+</section>
+
+<section id="customers" class="screen">
+  <div class="topline"><button class="back" onclick="show('home')">‹</button><h2 data-en="Customers" data-ar="العملاء">Customers</h2></div>
+  <div class="card">
+    <input id="cName" data-ph-en="Customer name" data-ph-ar="اسم العميل" placeholder="Customer name">
+    <input id="cPhone" data-ph-en="Phone" data-ph-ar="الهاتف" placeholder="Phone">
+    <input id="cAddress" data-ph-en="Address" data-ph-ar="العنوان" placeholder="Address">
+    <div class="customer-form-actions">
+      <button id="cSaveBtn" class="soft" onclick="addCustomer()" data-en="Save Customer" data-ar="حفظ العميل">Save Customer</button>
+      <button id="cCancelBtn" class="customer-cancel hidden" onclick="cancelCustomerEdit()" data-en="Cancel Edit" data-ar="إلغاء التعديل">Cancel Edit</button>
+    </div>
+  </div>
+  <div id="customerRows" class="card"></div>
+</section>
+
+<section id="customerStatement" class="screen">
+  <div class="topline">
+    <button class="back" onclick="show('customers')">‹</button>
+    <div>
+      <h2 data-en="Customer Statement" data-ar="كشف حساب العميل">Customer Statement</h2>
+      <small id="statementCustomerName"></small>
+    </div>
+  </div>
+
+  <div class="statement-actions no-print">
+    <button class="gold" onclick="shareCustomerStatementPDF()" data-en="Share PDF" data-ar="مشاركة PDF">Share PDF</button>
+    <button class="soft" onclick="openCustomerStatementPDF()" data-en="Open / Print PDF" data-ar="فتح / طباعة PDF">Open / Print PDF</button>
+  </div>
+  <div class="card statement-payment-card no-print">
+    <div class="statement-payment-title">
+      <div>
+        <strong data-en="Add Payment" data-ar="إضافة دفعة">Add Payment</strong>
+        <small data-en="Partial payments are allowed" data-ar="يمكن تسجيل دفعة جزئية">Partial payments are allowed</small>
+      </div>
+      <strong id="paymentOutstandingHint">0.000 OMR</strong>
+    </div>
+    <div class="statement-payment-grid">
+      <div>
+        <label data-en="Amount" data-ar="المبلغ">Amount</label>
+        <input id="statementPaymentAmount" type="number" min="0" step="0.001" data-ph-en="Payment amount" data-ph-ar="مبلغ الدفعة" placeholder="Payment amount">
+      </div>
+      <div>
+        <label data-en="Date" data-ar="التاريخ">Date</label>
+        <input id="statementPaymentDate" type="date">
+      </div>
+    </div>
+    <div class="statement-payment-grid">
+      <div>
+        <label data-en="Payment Method" data-ar="طريقة الدفع">Payment Method</label>
+        <select id="statementPaymentMethod">
+          <option value="cash" data-en="Cash" data-ar="نقداً">Cash</option>
+          <option value="bank" data-en="Bank Transfer" data-ar="تحويل بنكي">Bank Transfer</option>
+          <option value="cheque" data-en="Cheque" data-ar="شيك">Cheque</option>
+          <option value="card" data-en="Card" data-ar="بطاقة">Card</option>
+          <option value="other" data-en="Other" data-ar="أخرى">Other</option>
+        </select>
+      </div>
+      <div>
+        <label data-en="Reference (optional)" data-ar="المرجع (اختياري)">Reference (optional)</label>
+        <input id="statementPaymentReference" data-ph-en="Transfer / cheque reference" data-ph-ar="مرجع التحويل / الشيك" placeholder="Transfer / cheque reference">
+      </div>
+    </div>
+    <label data-en="Note (optional)" data-ar="ملاحظة (اختياري)">Note (optional)</label>
+    <input id="statementPaymentNote" data-ph-en="Payment note..." data-ph-ar="ملاحظة عن الدفعة..." placeholder="Payment note...">
+    <button class="gold statement-add-payment-btn" onclick="addStatementPayment()" data-en="Add Payment" data-ar="إضافة الدفعة">Add Payment</button>
+  </div>
+
+  <div class="statement-summary">
+    <div class="stat"><span data-en="Total Invoiced" data-ar="إجمالي الفواتير">Total Invoiced</span><strong id="statementTotal">0.000 OMR</strong></div>
+    <div class="stat"><span data-en="Total Paid" data-ar="إجمالي المدفوع">Total Paid</span><strong id="statementPaid">0.000 OMR</strong></div>
+    <div class="stat"><span data-en="Outstanding" data-ar="المتبقي">Outstanding</span><strong id="statementBalance">0.000 OMR</strong></div>
+    <div class="stat"><span data-en="Invoices" data-ar="عدد الفواتير">Invoices</span><strong id="statementCount">0</strong></div>
+  </div>
+
+  <div class="card statement-card">
+    <div id="statementCustomerInfo" class="statement-customer-info"></div>
+    <div class="statement-table-wrap">
+      <table class="statement-table">
+        <thead>
+          <tr>
+            <th data-en="Date" data-ar="التاريخ">Date</th>
+            <th data-en="Description" data-ar="البيان">Description</th>
+            <th data-en="Reference" data-ar="المرجع">Reference</th>
+            <th data-en="Debit" data-ar="له">Debit</th>
+            <th data-en="Credit" data-ar="منه">Credit</th>
+            <th data-en="Balance" data-ar="الرصيد">Balance</th>
+          </tr>
+        </thead>
+        <tbody id="statementRows"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card statement-payment-history-card">
+    <div class="card-title">
+      <h3 data-en="Payment History" data-ar="سجل الدفعات">Payment History</h3>
+    </div>
+    <div class="statement-table-wrap">
+      <table class="statement-table payment-history-table">
+        <thead>
+          <tr>
+            <th data-en="Receipt" data-ar="الإيصال">Receipt</th>
+            <th data-en="Date" data-ar="التاريخ">Date</th>
+            <th data-en="Method" data-ar="الطريقة">Method</th>
+            <th data-en="Amount" data-ar="المبلغ">Amount</th>
+            <th data-en="Applied To" data-ar="تم توزيعها على">Applied To</th>
+            <th data-en="Note" data-ar="الملاحظة">Note</th>
+          </tr>
+        </thead>
+        <tbody id="statementPaymentRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="products" class="screen">
+  <div class="topline"><button class="back" onclick="show('home')">‹</button><h2 data-en="Products & Services" data-ar="المنتجات والخدمات">Products & Services</h2></div>
+  <div class="card">
+    <input id="pName" data-ph-en="Product / service" data-ph-ar="المنتج / الخدمة" placeholder="Product / service">
+    <input id="pPrice" type="number" step="0.001" data-ph-en="Price" data-ph-ar="السعر" placeholder="Price">
+    <button class="soft" onclick="addProduct()" data-en="Save" data-ar="حفظ">Save</button>
+  </div>
+  <div id="productRows" class="card"></div>
+</section>
+
+<section id="expenses" class="screen">
+  <div class="topline"><button class="back" onclick="show('home')">‹</button><h2 data-en="Expenses" data-ar="المصروفات">Expenses</h2></div>
+  <div class="card">
+    <input id="eTitle" data-ph-en="Description" data-ph-ar="الوصف" placeholder="Description">
+    <input id="eAmount" type="number" step="0.001" data-ph-en="Amount" data-ph-ar="المبلغ" placeholder="Amount">
+
+    <label data-en="Link to Invoice / Quotation (optional)" data-ar="ربط بفاتورة / عرض سعر (اختياري)">Link to Invoice / Quotation (optional)</label>
+    <select id="eDocumentSelect">
+      <option value="" data-en="General expense — no document" data-ar="مصروف عام — بدون مستند">General expense — no document</option>
+    </select>
+
+    <div id="expenseLinkedDocHint" class="expense-linked-hint hidden"></div>
+
+    <button class="soft" onclick="addExpense()" data-en="Save Expense" data-ar="حفظ المصروف">Save Expense</button>
+  </div>
+  <div id="expenseRows" class="card"></div>
+</section>
+
+
+<section id="profitReports" class="screen">
+  <div class="topline">
+    <button class="back" onclick="show('home')">‹</button>
+    <div>
+      <h2 data-en="Profit Report" data-ar="تقرير الأرباح">Profit Report</h2>
+      <small data-en="Revenue less linked and general expenses" data-ar="الإيرادات ناقص المصروفات المرتبطة والعامة">Revenue less linked and general expenses</small>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="two">
+      <div>
+        <label data-en="From" data-ar="من">From</label>
+        <input id="profitStart" type="date" onchange="renderProfitReport()">
+      </div>
+      <div>
+        <label data-en="To" data-ar="إلى">To</label>
+        <input id="profitEnd" type="date" onchange="renderProfitReport()">
+      </div>
+    </div>
+    <button class="soft" onclick="setProfitThisMonth()" data-en="This Month" data-ar="هذا الشهر">This Month</button>
+  </div>
+
+  <div class="profit-summary">
+    <div class="stat"><span data-en="Invoiced Sales" data-ar="إجمالي الفواتير">Invoiced Sales</span><strong id="profitSales">0.000 OMR</strong></div>
+    <div class="stat"><span data-en="Linked Expenses" data-ar="مصروفات مرتبطة">Linked Expenses</span><strong id="profitLinkedExpenses">0.000 OMR</strong></div>
+    <div class="stat"><span data-en="General Expenses" data-ar="مصروفات عامة">General Expenses</span><strong id="profitGeneralExpenses">0.000 OMR</strong></div>
+    <div class="stat profit-main-stat"><span data-en="Net Profit Estimate" data-ar="صافي الربح التقديري">Net Profit Estimate</span><strong id="profitNet">0.000 OMR</strong></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <h3 data-en="Profit by Invoice" data-ar="الربح حسب الفاتورة">Profit by Invoice</h3>
+    </div>
+    <div class="statement-table-wrap">
+      <table class="statement-table profit-table">
+        <thead>
+          <tr>
+            <th data-en="Invoice" data-ar="الفاتورة">Invoice</th>
+            <th data-en="Customer" data-ar="العميل">Customer</th>
+            <th data-en="Revenue" data-ar="الإيراد">Revenue</th>
+            <th data-en="Expenses" data-ar="المصروفات">Expenses</th>
+            <th data-en="Profit" data-ar="الربح">Profit</th>
+          </tr>
+        </thead>
+        <tbody id="profitRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="paymentLedger" class="screen">
+  <div class="topline">
+    <button class="back" onclick="show('home')">‹</button>
+    <div>
+      <h2 data-en="Payment Ledger" data-ar="سجل الدفعات">Payment Ledger</h2>
+      <small data-en="Edit or delete recorded customer payments" data-ar="تعديل أو حذف دفعات العملاء المسجلة">Edit or delete recorded customer payments</small>
+    </div>
+  </div>
+
+  <div class="statement-summary">
+    <div class="stat"><span data-en="Recorded Payments" data-ar="عدد الدفعات">Recorded Payments</span><strong id="paymentLedgerCount">0</strong></div>
+    <div class="stat"><span data-en="Total Recorded" data-ar="إجمالي الدفعات">Total Recorded</span><strong id="paymentLedgerTotal">0.000 OMR</strong></div>
+  </div>
+
+  <div id="paymentEditCard" class="card hidden">
+    <div class="card-title">
+      <h3 data-en="Edit Payment" data-ar="تعديل الدفعة">Edit Payment</h3>
+      <small id="paymentEditReceipt"></small>
+    </div>
+    <div class="two">
+      <div>
+        <label data-en="Amount" data-ar="المبلغ">Amount</label>
+        <input id="paymentEditAmount" type="number" min="0" step="0.001">
+      </div>
+      <div>
+        <label data-en="Date" data-ar="التاريخ">Date</label>
+        <input id="paymentEditDate" type="date">
+      </div>
+    </div>
+    <label data-en="Payment Method" data-ar="طريقة الدفع">Payment Method</label>
+    <select id="paymentEditMethod">
+      <option value="cash" data-en="Cash" data-ar="نقداً">Cash</option>
+      <option value="bank" data-en="Bank Transfer" data-ar="تحويل بنكي">Bank Transfer</option>
+      <option value="cheque" data-en="Cheque" data-ar="شيك">Cheque</option>
+      <option value="card" data-en="Card" data-ar="بطاقة">Card</option>
+      <option value="other" data-en="Other" data-ar="أخرى">Other</option>
+    </select>
+    <input id="paymentEditReference" data-ph-en="Reference (optional)" data-ph-ar="المرجع (اختياري)" placeholder="Reference (optional)">
+    <input id="paymentEditNote" data-ph-en="Note (optional)" data-ph-ar="ملاحظة (اختياري)" placeholder="Note (optional)">
+    <div class="two">
+      <button class="gold" onclick="savePaymentEdit()" data-en="Save Changes" data-ar="حفظ التعديلات">Save Changes</button>
+      <button class="soft" onclick="cancelPaymentEdit()" data-en="Cancel" data-ar="إلغاء">Cancel</button>
+    </div>
+  </div>
+
+  <div id="paymentLedgerRows" class="card"></div>
+</section>
+
+<section id="settings" class="screen">
+  <div class="topline"><button class="back" onclick="show('home')">‹</button><h2 data-en="Settings" data-ar="الإعدادات">Settings</h2></div>
+  <div class="card">
+    <input id="sCompany" data-ph-en="Company name" data-ph-ar="اسم الشركة" placeholder="Company name">
+    <input id="sPhone" data-ph-en="Phone" data-ph-ar="الهاتف" placeholder="Phone">
+    <input id="sEmail" data-ph-en="Email" data-ph-ar="البريد الإلكتروني" placeholder="Email">
+    <input id="sAddress" data-ph-en="Address" data-ph-ar="العنوان" placeholder="Address">
+    <input id="sVat" data-ph-en="VAT number" data-ph-ar="الرقم الضريبي" placeholder="VAT number"><label data-en="Company Logo" data-ar="شعار الشركة">Company Logo</label><div class="logo-setting"><img id="logoPreview" src="smart-gate-logo.jpeg" alt="Company logo"><input id="sLogo" type="file" accept="image/*" onchange="changeLogo(event)"></div>
+    
+    <label data-en="Currency" data-ar="العملة">Currency</label>
+    <div class="currency-picker">
+      <div class="currency-search-wrap">
+        <input id="sCurrencySearch"
+               type="search"
+               autocomplete="off"
+               autocorrect="off"
+               spellcheck="false"
+               enterkeyhint="done"
+               data-ph-en="Search by code or currency name..."
+               data-ph-ar="ابحث برمز العملة أو اسمها..."
+               placeholder="Search by code or currency name..."
+               onfocus="openCurrencyResults()"
+               oninput="filterCurrencies()">
+        <button type="button" class="currency-clear" onclick="clearCurrencySearch()" aria-label="Clear">×</button>
+      </div>
+      <input id="sCurrency" type="hidden" value="OMR">
+      <div id="currencyResults" class="currency-results hidden"></div>
+      <div id="selectedCurrency" class="selected-currency">
+        <span class="selected-currency-code">OMR</span>
+        <span class="selected-currency-name">Omani Rial</span>
+      </div>
+    </div>
+<button class="soft" onclick="saveSettings()" data-en="Save Settings" data-ar="حفظ الإعدادات">Save Settings</button>
+  </div>
+
+  <div class="card backup-card">
+    <div class="card-title">
+      <div>
+        <h3 data-en="Backup & Restore" data-ar="النسخ الاحتياطي والاستعادة">Backup & Restore</h3>
+        <small data-en="Choose where you want to keep your backup." data-ar="اختر المكان الذي تريد حفظ النسخة الاحتياطية فيه.">Choose where you want to keep your backup.</small>
+      </div>
+    </div>
+
+    <label data-en="Backup Location" data-ar="مكان النسخة الاحتياطية">Backup Location</label>
+    <div class="cloud-backup-options">
+      <button id="backupICloudBtn" type="button" class="cloud-choice active" onclick="selectBackupDestination('icloud')">
+        <span class="cloud-choice-icon">☁︎</span>
+        <span><strong>iCloud Drive</strong><small data-en="Apple Files" data-ar="ملفات Apple">Apple Files</small></span>
+      </button>
+      <button id="backupGoogleBtn" type="button" class="cloud-choice" onclick="selectBackupDestination('google')">
+        <span class="cloud-choice-icon">G</span>
+        <span><strong>Google Drive</strong><small data-en="Google Drive / Files" data-ar="Google Drive / الملفات">Google Drive / Files</small></span>
+      </button>
+    </div>
+    <input id="backupDestination" type="hidden" value="icloud">
+    <div id="backupDestinationHint" class="backup-destination-hint"></div>
+
+    <div class="auto-backup-box">
+      <div class="toggle-row">
+        <div>
+          <strong data-en="Auto Daily Backup" data-ar="نسخ احتياطي يومي تلقائي">Auto Daily Backup</strong>
+          <small data-en="Creates a daily snapshot at day end, or next opening if the app was closed." data-ar="ينشئ نسخة يومية في نهاية اليوم، أو عند أول فتح في اليوم التالي إذا كان التطبيق مغلقاً.">Creates a daily snapshot at day end, or next opening if the app was closed.</small>
+        </div>
+        <input id="autoDailyBackupToggle" type="checkbox" onchange="setAutoDailyBackup(this.checked)">
+      </div>
+      <div class="auto-backup-status">
+        <span data-en="Last daily backup" data-ar="آخر نسخة يومية">Last daily backup</span>
+        <strong id="lastDailyBackupText">—</strong>
+      </div>
+      <small class="auto-backup-note" data-en="The daily snapshot is automatic inside the app. iPhone requires one tap to copy it to iCloud Drive or Google Drive." data-ar="النسخة اليومية داخل التطبيق تلقائية. يتطلب iPhone ضغطة واحدة فقط لنسخها إلى iCloud Drive أو Google Drive.">The daily snapshot is automatic inside the app. iPhone requires one tap to copy it to iCloud Drive or Google Drive.</small>
+      <button id="saveLatestDailyBackupBtn" class="soft" onclick="shareLatestDailyBackup()" data-en="Save Latest Daily Backup to Cloud" data-ar="حفظ آخر نسخة يومية في السحابة">Save Latest Daily Backup to Cloud</button>
+    </div>
+
+    <button class="gold" onclick="exportCloudBackup()" data-en="Cloud Backup Now" data-ar="نسخ احتياطي سحابي الآن">Cloud Backup Now</button>
+    <button class="soft" onclick="exportBackup()" data-en="Save Backup File" data-ar="حفظ ملف نسخة احتياطية">Save Backup File</button>
+    <button class="soft" onclick="document.getElementById('backupFileInput').click()" data-en="Restore from iCloud / Google Drive" data-ar="استعادة من iCloud / Google Drive">Restore from iCloud / Google Drive</button>
+    <input id="backupFileInput" class="hidden" type="file" accept=".json,application/json" onchange="importBackupFile(event)">
+    <small class="backup-warning" data-en="On iPhone, the Share/Files window lets you choose iCloud Drive or Google Drive. Restore replaces current local data after confirmation." data-ar="على iPhone تتيح نافذة المشاركة/الملفات اختيار iCloud Drive أو Google Drive. الاستعادة تستبدل البيانات الحالية بعد التأكيد.">On iPhone, the Share/Files window lets you choose iCloud Drive or Google Drive. Restore replaces current local data after confirmation.</small>
+  </div>
+</section>
+</main>
+
+<nav class="bottom no-print">
+  <button onclick="show('home')" aria-label="Home"><span class="nav-icon">⌂</span><span class="nav-label" data-en="Home" data-ar="الرئيسية">Home</span></button>
+  <button onclick="show('documents')" aria-label="Documents"><span class="nav-icon">▤</span><span class="nav-label" data-en="Documents" data-ar="الفواتير والعروض">Documents</span></button>
+  <button onclick="show('customers')" aria-label="Customers"><span class="nav-icon">♙</span><span class="nav-label" data-en="Customers" data-ar="العملاء">Customers</span></button>
+  <button onclick="openMore()" aria-label="More"><span class="nav-icon">•••</span><span class="nav-label" data-en="More" data-ar="المزيد">More</span></button>
+</nav>
+
+<div id="moreMenu" class="sheet hidden no-print">
+  <div class="sheet-card">
+    <button onclick="show('products');closeMore()" data-en="Products & Services" data-ar="المنتجات والخدمات">Products & Services</button>
+    <button onclick="show('expenses');closeMore()" data-en="Expenses" data-ar="المصروفات">Expenses</button>
+    <button onclick="show('profitReports');closeMore()" data-en="Profit Report" data-ar="تقرير الأرباح">Profit Report</button>
+    <button onclick="show('paymentLedger');closeMore()" data-en="Payment Ledger" data-ar="سجل الدفعات">Payment Ledger</button>
+    <button onclick="show('settings');closeMore()" data-en="Settings" data-ar="الإعدادات">Settings</button>
+    <button onclick="closeMore()" data-en="Cancel" data-ar="إلغاء">Cancel</button>
+  </div>
+</div>
+
+<script src="app.js?v=20260909-financeplus"></script>
+</body>
+</html>

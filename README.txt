@@ -1,0 +1,1 @@
+Fresh rebuild. No service worker/cache. Upload folder contents to Netlify. Visible build: 2026.08.24-0110.
